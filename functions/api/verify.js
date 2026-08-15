@@ -4,10 +4,7 @@ export async function onRequestPost(context) {
     const code = String(body.code || "").trim().toUpperCase();
 
     if (!code) {
-      return Response.json(
-        { valid: false },
-        { status: 400 }
-      );
+      return Response.json({ valid: false }, { status: 400 });
     }
 
     const result = await context.env.DB
@@ -15,7 +12,10 @@ export async function onRequestPost(context) {
         SELECT
           code,
           document_title,
+          document_reference,
           holder_name,
+          character_name,
+          issued_by,
           issue_date,
           status
         FROM documents
@@ -26,20 +26,17 @@ export async function onRequestPost(context) {
       .first();
 
     if (!result) {
-      return Response.json(
-        { valid: false },
-        { status: 404 }
-      );
+      return Response.json({ valid: false }, { status: 404 });
     }
 
     return Response.json({
       valid: true,
       record: {
         documentTitle: result.document_title,
-        documentReference: result.code,
+        documentReference: result.document_reference,
         issuedTo: result.holder_name,
-        character: "Biddut Jalil",
-        issuedBy: "Direction and Production Authority",
+        character: result.character_name,
+        issuedBy: result.issued_by,
         dateOfIssue: result.issue_date,
         status: result.status
       }
