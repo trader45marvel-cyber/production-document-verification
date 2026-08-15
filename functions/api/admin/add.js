@@ -1,9 +1,18 @@
 export async function onRequestPost(context) {
   try {
-    const auth = context.request.headers.get("Authorization") || "";
-    const expected = `Bearer ${context.env.ADMIN_SECRET}`;
+    const authHeader = context.request.headers.get("Authorization");
 
-    if (auth !== expected) {
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return Response.json(
+        { success: false, error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    const suppliedSecret = authHeader.slice(7);
+    const adminSecret = context.env.ADMIN_SECRET;
+
+    if (!adminSecret || suppliedSecret !== adminSecret) {
       return Response.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
@@ -40,8 +49,17 @@ export async function onRequestPost(context) {
     await context.env.DB
       .prepare(`
         INSERT INTO documents
-        (code, document_title, document_reference, holder_name,
-         character_name, issued_by, issue_date, status, created_at)
+        (
+          code,
+          document_title,
+          document_reference,
+          holder_name,
+          character_name,
+          issued_by,
+          issue_date,
+          status,
+          created_at
+        )
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
       `)
       .bind(
@@ -63,7 +81,10 @@ export async function onRequestPost(context) {
 
   } catch (error) {
     return Response.json(
-      { success: false, error: "Could not add document" },
+      {
+        success: false,
+        error: "Could not add document"
+      },
       { status: 500 }
     );
   }
