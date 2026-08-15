@@ -98,14 +98,59 @@ button:hover{transform:translateY(-1px);box-shadow:0 9px 22px #10182826}
 </main>
 
 <script>
-const VALID_CODE="CF4F335ADD91642D";
-function verify(){
- const c=document.getElementById("code").value.trim().toUpperCase();
- const v=document.getElementById("valid"),i=document.getElementById("invalid");
- v.style.display="none";i.style.display="none";
- if(c===VALID_CODE&&c.length)v.style.display="block";else i.style.display="block";
+async function verify(){
+  const c=document.getElementById("code").value.trim().toUpperCase();
+  const v=document.getElementById("valid");
+  const i=document.getElementById("invalid");
+
+  v.style.display="none";
+  i.style.display="none";
+
+  if(!c){
+    i.querySelector("h3").textContent="Verification Failed";
+    i.querySelector("p").textContent="Please enter a verification code.";
+    i.style.display="block";
+    return;
+  }
+
+  try{
+    const response=await fetch("/api/verify",{
+      method:"POST",
+      headers:{"Content-Type":"application/json"},
+      body:JSON.stringify({code:c})
+    });
+
+    const data=await response.json();
+
+    if(data.valid){
+      const r=data.record;
+
+      const values=document.querySelectorAll("#valid .value");
+      values[0].textContent=r.documentTitle;
+      values[1].textContent=r.documentReference;
+      values[2].textContent=c;
+      values[3].textContent=r.issuedTo;
+      values[4].textContent=r.character;
+      values[5].textContent=r.issuedBy;
+      values[6].textContent=r.dateOfIssue;
+      values[7].textContent=r.status;
+
+      v.style.display="block";
+    }else{
+      i.querySelector("h3").textContent="Verification Failed";
+      i.querySelector("p").textContent="No matching record was found.";
+      i.style.display="block";
+    }
+  }catch(error){
+    i.querySelector("h3").textContent="Verification Unavailable";
+    i.querySelector("p").textContent="The verification service is temporarily unavailable. Please try again.";
+    i.style.display="block";
+  }
 }
-document.getElementById("code").addEventListener("keydown",e=>{if(e.key==="Enter")verify()});
+
+document.getElementById("code").addEventListener("keydown",e=>{
+  if(e.key==="Enter") verify();
+});
 </script>
 </body>
 </html>
