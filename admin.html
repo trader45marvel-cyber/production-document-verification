@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Production Document Administration</title>
+<style>
+body{margin:0;background:#f4f6f9;color:#172033;font-family:system-ui,-apple-system,"Segoe UI",sans-serif}
+main{max-width:720px;margin:50px auto;padding:20px}
+.card{background:#fff;border:1px solid #e4e7ec;border-radius:20px;padding:30px;box-shadow:0 15px 45px #10182812}
+h1{margin-top:0;font-size:25px}
+p{color:#667085;font-size:14px}
+label{display:block;margin:17px 0 7px;font-size:13px;font-weight:700}
+input{width:100%;box-sizing:border-box;padding:12px;border:1px solid #d0d5dd;border-radius:9px;font-size:14px}
+button{margin-top:22px;padding:13px 18px;border:0;border-radius:9px;background:#101828;color:#fff;font-weight:700;cursor:pointer}
+#result{margin-top:20px;padding:13px;border-radius:9px;display:none;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+<section class="card">
+<h1>Production Document Administration</h1>
+<p>Add a new authenticated document record to the verification database.</p>
+
+<label>Admin Secret</label>
+<input id="secret" type="password" autocomplete="off">
+
+<label>Verification Code</label>
+<input id="code" autocomplete="off">
+
+<label>Document Title</label>
+<input id="documentTitle">
+
+<label>Document Reference</label>
+<input id="documentReference">
+
+<label>Issued To</label>
+<input id="holderName">
+
+<label>Character</label>
+<input id="characterName">
+
+<label>Issued By</label>
+<input id="issuedBy">
+
+<label>Date of Issue</label>
+<input id="issueDate" type="date">
+
+<label>Status</label>
+<input id="status" value="Authenticated — Final">
+
+<button onclick="addDocument()">Add Document</button>
+
+<div id="result"></div>
+</section>
+</main>
+
+<script>
+async function addDocument(){
+  const result=document.getElementById("result");
+  result.style.display="none";
+
+  const payload={
+    code:document.getElementById("code").value,
+    documentTitle:document.getElementById("documentTitle").value,
+    documentReference:document.getElementById("documentReference").value,
+    holderName:document.getElementById("holderName").value,
+    characterName:document.getElementById("characterName").value,
+    issuedBy:document.getElementById("issuedBy").value,
+    issueDate:document.getElementById("issueDate").value,
+    status:document.getElementById("status").value
+  };
+
+  try{
+    const response=await fetch("/api/admin/add",{
+      method:"POST",
+      headers:{
+        "Content-Type":"application/json",
+        "Authorization":"Bearer "+document.getElementById("secret").value
+      },
+      body:JSON.stringify(payload)
+    });
+
+    const data=await response.json();
+
+    result.textContent=data.success
+      ? "Document added successfully."
+      : (data.error || "Request failed.");
+
+    result.style.display="block";
+  }catch{
+    result.textContent="Unable to contact the administration service.";
+    result.style.display="block";
+  }
+}
+</script>
+</body>
+</html>
